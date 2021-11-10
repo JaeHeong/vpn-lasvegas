@@ -1,31 +1,137 @@
 {
   "ovpn_file":[
     {"id":0,"file":"
-setenv FORWARD_COMPATIBLE 1
-client
-server-poll-timeout 4
-nobind
-remote 34.125.168.177 1194 udp
-remote 34.125.168.177 1194 udp
-remote 34.125.168.177 443 tcp
-remote 34.125.168.177 1194 udp
-remote 34.125.168.177 1194 udp
-remote 34.125.168.177 1194 udp
-remote 34.125.168.177 1194 udp
-remote 34.125.168.177 1194 udp
-dev tun
-dev-type tun
-ns-cert-type server
-setenv opt tls-version-min 1.0 or-highest
-reneg-sec 604800
-sndbuf 0
-rcvbuf 0
-# NOTE: LZO commands are pushed by the Access Server at connect time.
-# NOTE: The below line doesn't disable LZO.
-comp-lzo no
-verb 3
-setenv PUSH_PEER_INFO
+##############################################
+# Sample client-side OpenVPN 2.0 config file #
+# for connecting to multi-client server.     #
+#                                            #
+# This configuration can be used by multiple #
+# clients, however each client should have   #
+# its own cert and key files.                #
+#                                            #
+# On Windows, you might want to rename this  #
+# file so it has a .ovpn extension           #
+##############################################
 
+# Specify that we are a client and that we
+# will be pulling certain config file directives
+# from the server.
+client
+
+# Use the same setting as you are using on
+# the server.
+# On most systems, the VPN will not function
+# unless you partially or fully disable
+# the firewall for the TUN/TAP interface.
+;dev tap
+dev tun
+
+# Windows needs the TAP-Win32 adapter name
+# from the Network Connections panel
+# if you have more than one.  On XP SP2,
+# you may need to disable the firewall
+# for the TAP adapter.
+;dev-node MyTap
+
+# Are we connecting to a TCP or
+# UDP server?  Use the same setting as
+# on the server.
+proto tcp
+proto udp
+
+# The hostname/IP and port of the server.
+# You can have multiple remote entries
+# to load balance between the servers.
+remote 34.125.168.177 443
+remote 34.125.168.177 1194
+
+# Choose a random host from the remote
+# list for load-balancing.  Otherwise
+# try hosts in the order specified.
+;remote-random
+
+# Keep trying indefinitely to resolve the
+# host name of the OpenVPN server.  Very useful
+# on machines which are not permanently connected
+# to the internet such as laptops.
+resolv-retry infinite
+
+# Most clients don't need to bind to
+# a specific local port number.
+nobind
+
+# Downgrade privileges after initialization (non-Windows only)
+user nobody
+group nogroup
+
+# Try to preserve some state across restarts.
+persist-key
+persist-tun
+
+# If you are connecting through an
+# HTTP proxy to reach the actual OpenVPN
+# server, put the proxy server/IP and
+# port number here.  See the man page
+# if your proxy server requires
+# authentication.
+;http-proxy-retry # retry on connection failures
+;http-proxy [proxy server] [proxy port #]
+
+# Wireless networks often produce a lot
+# of duplicate packets.  Set this flag
+# to silence duplicate packet warnings.
+;mute-replay-warnings
+
+# SSL/TLS parms.
+# See the server config file for more
+# description.  It's best to use
+# a separate .crt/.key file pair
+# for each client.  A single ca
+# file can be used for all clients.
+# ca ca.crt
+# cert client.crt
+# key client.key
+
+cipher AES-128-CBC
+auth SHA256
+key-direction 1
+
+# Verify server certificate by checking that the
+# certicate has the correct key usage set.
+# This is an important precaution to protect against
+# a potential attack discussed here:
+#  http://openvpn.net/howto.html#mitm
+#
+# To use this feature, you will need to generate
+# your server certificates with the keyUsage set to
+#   digitalSignature, keyEncipherment
+# and the extendedKeyUsage to
+#   serverAuth
+# EasyRSA can do this for you.
+remote-cert-tls server
+
+# If a tls-auth key is used on the server
+# then every client must also have the key.
+tls-auth ta.key 1
+
+# Select a cryptographic cipher.
+# If the cipher option is used on the server
+# then you must also specify it here.
+# Note that v2.4 client/server will automatically
+# negotiate AES-256-GCM in TLS mode.
+# See also the ncp-cipher option in the manpage
+cipher AES-256-CBC
+
+# Enable compression on the VPN link.
+# Don't enable this unless it is also
+# enabled in the server config file.
+#comp-lzo
+
+# Set log file verbosity.
+verb 3
+
+# Silence repeating messages
+;mute 20
 <ca>
 -----BEGIN CERTIFICATE-----
 MIIFGTCCBAGgAwIBAgIUHLshd6bIcpHD9Vuct8yjpdcvgkIwDQYJKoZIhvcNAQEL
@@ -58,8 +164,74 @@ qONj6pf2YXAtpdA/KsEi7oK6lKIpfY7OWw5fcI9+qLkFp9o6YBIr433lsX4feXsu
 6EAHmHDIGDaSUPHpHg==
 -----END CERTIFICATE-----
 </ca>
-
 <cert>
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 2 (0x2)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=US, ST=NE, L=LasVegas, O=Fort-Funston, OU=MyOrganizationalUnit, CN=Fort-Funston CA/name=server/emailAddress=me@myhost.mydomain
+        Validity
+            Not Before: Nov 10 09:33:20 2021 GMT
+            Not After : Nov  8 09:33:20 2031 GMT
+        Subject: C=US, ST=NE, L=LasVegas, O=Fort-Funston, OU=MyOrganizationalUnit, CN=client/name=server/emailAddress=me@myhost.mydomain
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:e8:f7:65:5b:b1:7d:f8:24:bd:e4:f3:e5:b1:de:
+                    25:fb:d3:ef:89:ed:2e:42:fe:f1:fb:82:cc:ca:4d:
+                    df:e8:b8:eb:c3:64:59:c3:5f:24:0e:70:bd:9d:9a:
+                    90:e3:51:39:5f:08:b4:4c:0e:65:83:86:98:6f:7d:
+                    71:12:8b:05:57:5b:2d:a7:07:7b:64:e4:0f:98:26:
+                    e9:45:f6:37:5d:a4:7e:1b:1d:42:a3:04:52:94:62:
+                    b1:bc:1d:08:13:3d:bd:f8:b8:28:6d:86:19:44:fd:
+                    b4:79:fb:ea:7b:8a:fb:a7:9d:38:11:fe:56:20:4d:
+                    16:2a:8d:80:d9:57:da:e3:ff:13:da:f8:3a:99:86:
+                    ed:0d:4f:29:11:54:9e:72:34:17:c6:ed:c5:72:78:
+                    41:01:de:3c:62:14:45:82:00:c9:51:d5:b5:4e:e4:
+                    d4:72:01:f3:28:9e:49:95:52:05:78:83:af:2d:83:
+                    36:5a:c4:82:39:2d:86:3b:b4:c6:3a:07:8a:5b:42:
+                    11:dd:d7:ab:84:f9:dc:16:c0:f3:e3:ca:aa:08:e6:
+                    71:ce:42:1f:98:69:77:c3:d6:97:e5:d4:8a:15:30:
+                    aa:91:dc:61:be:03:10:df:ee:d1:8f:a5:54:04:11:
+                    32:ce:53:04:f6:5f:e3:8f:4d:b8:54:10:f8:28:3b:
+                    cc:65
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                Easy-RSA Generated Certificate
+            X509v3 Subject Key Identifier: 
+                C7:C6:76:BB:B1:24:BA:01:33:91:1C:CD:EC:39:79:43:4E:E9:E3:59
+            X509v3 Authority Key Identifier: 
+                keyid:3E:2E:AF:A4:15:D2:42:AE:AF:AB:BC:DA:19:21:19:B3:0B:C8:2C:B1
+                DirName:/C=US/ST=NE/L=LasVegas/O=Fort-Funston/OU=MyOrganizationalUnit/CN=Fort-Funston CA/name=server/emailAddress=me@myhost.mydomain
+                serial:1C:BB:21:77:A6:C8:72:91:C3:F5:5B:9C:B7:CC:A3:A5:D7:2F:82:42
+
+            X509v3 Extended Key Usage: 
+                TLS Web Client Authentication
+            X509v3 Key Usage: 
+                Digital Signature
+            X509v3 Subject Alternative Name: 
+                DNS:client
+    Signature Algorithm: sha256WithRSAEncryption
+         1d:51:80:ac:e0:0f:ed:07:09:2a:bf:52:85:56:01:61:10:10:
+         f6:d9:50:1d:7b:04:5b:a2:ae:94:6e:7c:86:31:dd:d8:b9:0d:
+         67:16:87:c7:16:25:82:75:c5:e5:50:e0:af:56:30:bb:ed:49:
+         21:f9:db:8b:89:41:c0:f3:49:36:18:90:37:9d:83:53:99:b6:
+         10:2a:ba:25:d0:dd:20:31:cf:4d:b1:36:77:32:62:00:c5:c7:
+         71:f1:3f:88:d7:06:68:61:e9:4d:07:48:fd:1e:18:a2:41:2b:
+         7e:eb:e8:c7:2c:78:7a:29:89:f7:a3:06:c1:f0:17:d1:da:a3:
+         3b:f9:3f:f6:1d:21:4f:f2:1e:3b:a9:cd:62:47:ca:69:6d:ef:
+         7a:42:73:d5:ef:76:e9:87:32:da:4f:9c:a1:e8:63:66:db:16:
+         e0:d8:26:cd:da:2c:95:62:5c:2b:a1:dd:ff:bc:3e:5d:76:2f:
+         9f:46:73:13:5d:72:9e:b5:33:81:ac:18:d4:6f:3a:62:cf:79:
+         5f:e0:cb:0e:2f:87:c8:ec:d5:ba:5c:0c:92:a8:23:d7:75:2e:
+         8c:c2:d9:86:00:03:85:a2:8c:5e:85:ef:18:7c:4d:1b:e9:0c:
+         24:f0:5f:cd:d1:ac:70:95:51:61:45:be:f4:01:d8:b4:af:74:
+         00:91:4c:59
 -----BEGIN CERTIFICATE-----
 MIIFXjCCBEagAwIBAgIBAjANBgkqhkiG9w0BAQsFADCBsTELMAkGA1UEBhMCVVMx
 CzAJBgNVBAgTAk5FMREwDwYDVQQHEwhMYXNWZWdhczEVMBMGA1UEChMMRm9ydC1G
@@ -92,7 +264,6 @@ O/k/9h0hT/IeO6nNYkfKaW3vekJz1e926Ycy2k+coehjZtsW4NgmzdoslWJcK6Hd
 haKMXoXvGHxNG+kMJPBfzdGscJVRYUW+9AHYtK90AJFMWQ==
 -----END CERTIFICATE-----
 </cert>
-
 <key>
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDo92VbsX34JL3k
@@ -123,11 +294,9 @@ VWZQRCBYXRBekz0InF4k4s3FLFEaDvOHsBKuHlXE5c9AZ0sFSC67eQRhEhG6esb/
 SbzKJJ1phFqOai9NNo3Qwpg=
 -----END PRIVATE KEY-----
 </key>
-
-key-direction 1
 <tls-auth>
 #
-# 2048 bit OpenVPN static key (Server Agent)
+# 2048 bit OpenVPN static key
 #
 -----BEGIN OpenVPN Static key V1-----
 a117a80ecf5f0a13eff5d97a12207fe5
@@ -147,7 +316,8 @@ e7695fa508f1e30fc9569f1e1dbcd989
 69296449805e39fcfb25a5b47eb781ee
 cce8c52602d5a32b7a98e3026c973eed
 -----END OpenVPN Static key V1-----
-</tls-auth>"},
+</tls-auth>
+"},
      
     ]
 }
