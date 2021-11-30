@@ -1,21 +1,6 @@
 {
-  "ads":"true",
-  "update":[{
-    "version":"2.8.2000",
-    "title":"Best VPN",
-    "description":"It is best VPN in your whole life",
-    "size":"https://git.io/JeY69"
-  }],
-  "blocked":[
-    {"id":0, "app":"com.android.game"},
-    {"id":1, "app":"com.utorrent.client"},
-    {"id":2, "app":"com.torrent.client"},
-    {"id":3, "app":"com.tor.client"},
-    {"id":4, "app":"com.insta.client"},
-    {"id":5, "app":"com.facebook.client"},
-    {"id":6, "app":"com.get.client"}
-  ],
-  "free":[
-    {"id":0, "file":0, "city":"Las Vegas","country":"United States","image":"unitedstates","ip":"34.125.187.187","active":"true","signal":"a"}
-  ]
+  "ovpn_file":[{
+    "id":0,
+    "file":"Best VPN"
+  }]
 }
